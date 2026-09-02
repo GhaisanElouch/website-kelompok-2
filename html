@@ -1,0 +1,39 @@
+/* ── Animasi Pulsa pada Badge Hero ── */
+.hero-badge {
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+}
+
+/* ── Animasi Micro-interaction Tombol ── */
+.card button {
+  transition: transform 0.15s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.card button:active {
+  transform: scale(0.95) !important;
+}
+
+/* ── Efek Ripple saat Tombol Ditekan ── */
+.ripple {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: 50%;
+  animation: rippleEffect 0.6s linear forwards;
+}
+@keyframes rippleEffect {
+  0% { width: 0px; height: 0px; opacity: 0.8; }
+  100% { width: 300px; height: 300px; opacity: 0; }
+}
+
+/* ── Animasi Shake pada Gambar saat Hover ── */
+.card-img-wrap img {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.card:hover .card-img-wrap img {
+  transform: scale(1.08) rotate(-2deg);
+}

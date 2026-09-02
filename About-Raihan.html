@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GadgetZone - Toko HP Terpercaya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
+      background-color: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+      color: #fff;
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #7b61ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    nav a {
+      color: #a0aec0;
+      text-decoration: none;
+      margin-left: 1.8rem;
+      font-weight: 600;
+      font-size: 0.92rem;
+      transition: color 0.25s;
+      position: relative;
+    }
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #00d4ff, #7b61ff);
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+    nav a:hover { color: #fff; }
+    nav a:hover::after { width: 100%; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: white;
+      padding: 4rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(123, 97, 255, 0.08) 0%, transparent 50%);
+      animation: heroGlow 8s ease-in-out infinite alternate;
+    }
+    @keyframes heroGlow {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-5%, 5%); }
+    }
+    .hero h2 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 0.6rem;
+      position: relative;
+      letter-spacing: -1px;
+    }
+    .hero p {
+      font-size: 1.1rem;
+      color: #a0aec0;
+      position: relative;
+    }
+    .hero-badge {
+      display: inline-block;
+      margin-top: 1.2rem;
+      padding: 0.5rem 1.4rem;
+      background: rgba(0, 212, 255, 0.12);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      border-radius: 50px;
+      font-size: 0.85rem;
+      color: #00d4ff;
+      font-weight: 600;
+      position: relative;
+    }
+
+    /* ── Container ── */
+    .container {
+      max-width: 1240px;
+      margin: 2.5rem auto;
+      padding: 0 1.2rem;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 1.9rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: #0f0c29;
+      letter-spacing: -0.5px;
+    }
+    .section-subtitle {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    /* ── Filter Tabs ── */
+    .filter-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .filter-tabs button {
+      padding: 0.5rem 1.2rem;
+      border: 2px solid #e2e8f0;
+      background: #fff;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: inherit;
+    }
+    .filter-tabs button:hover {
+      border-color: #7b61ff;
+      color: #7b61ff;
+    }
+    .filter-tabs button.active {
+      background: linear-gradient(135deg, #7b61ff, #00d4ff);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    /* ── Product Grid ── */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.4rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      padding: 1.2rem 1.2rem 1.4rem;
+      text-align: center;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00d4ff, #7b61ff);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+    }
+    .card:hover::before { opacity: 1; }
+
+    .badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .badge-samsung { background: #e8f0fe; color: #1a73e8; }
+    .badge-oppo { background: #e6f9ed; color: #1a9f4e; }
+    .badge-infinix { background: #fff3e0; color: #e65100; }
+    .badge-xiaomi { background: #fff3e0; color: #ff6d00; }
+    .badge-realme { background: #fce4ec; color: #c62828; }
+    .badge-vivo { background: #e8eaf6; color: #283593; }
+
+    .card-img-wrap {
+      width: 100%;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0.8rem 0 1rem;
+      padding: 0.5rem;
+      background: linear-gradient(180deg, #f8f9fc 0%, #fff 100%);
+      border-radius: 12px;
+    }
+    .card-img-wrap img {
+      max-width: 90%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: transform 0.4s ease;
+    }
+    .card:hover .card-img-wrap img {
+      transform: scale(1.05);
+    }
+
+    .card h3 {
+      font-size: 1.02rem;
+      color: #0f0c29;
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .card .specs {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 0.8rem;
+      font-weight: 500;
+    }
+    .card .price {
+      color: #7b61ff;
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.3px;
+    }
+    .card .price-old {
+      font-size: 0.78rem;
+      color: #b0b8c4;
+      text-decoration: line-through;
+      font-weight: 500;
+      margin-bottom: 0.15rem;
+    }
+
+    .card button {
+      background: linear-gradient(135deg, #7b61ff 0%, #5a45d6 100%);
+      color: white;
+      border: none;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      font-size: 0.88rem;
+      font-family: inherit;
+      transition: all 0.25s;
+      box-shadow: 0 4px 15px rgba(123, 97, 255, 0.3);
+    }
+    .card button:hover {
+      background: linear-gradient(135deg, #8b74ff 0%, #6b55e6 100%);
+      box-shadow: 0 6px 20px rgba(123, 97, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .card button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(123, 97, 255, 0.3);
+    }
+
+    /* ── Toast Notification ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1a1a2e;
+      color: #fff;
+      padding: 0.9rem 1.6rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 999;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: inherit;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast .toast-icon {
+      width: 22px;
+      height: 22px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+      color: #64748b;
+      margin-top: 3rem;
+      font-size: 0.88rem;
+    }
+    footer span { color: #7b61ff; font-weight: 700; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 0.8rem 1rem; }
+      header h1 { font-size: 1.3rem; }
+      nav a { margin-left: 1rem; font-size: 0.82rem; }
+      .hero { padding: 2.5rem 1rem; }
+      .hero h2 { font-size: 1.8rem; }
+      .section-title { font-size: 1.5rem; }
+      .products { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>GadgetZone</h1>
+    <nav>
+      <a href="#">Beranda</a>
+      <a href="#produk">Katalog</a>
+      <a href="#kontak">Kontak</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h2>Dapatkan Smartphone Impianmu</h2>
+    <p>Pilihan terlengkap dari brand ternama dengan garansi resmi</p>
+    <div class="hero-badge">🔥 Gratis Ongkir Seluruh Indonesia</div>
+  </section>
+
+  <main class="container" id="produk">
+    <h2 class="section-title">Katalog Produk</h2>
+    <p class="section-subtitle">10 smartphone terbaik pilihan GadgetZone</p>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="active" data-brand="all">Semua</button>
+      <button data-brand="samsung">Samsung</button>
+      <button data-brand="oppo">OPPO</button>
+      <button data-brand="infinix">Infinix</button>
+      <button data-brand="xiaomi">Xiaomi</button>
+      <button data-brand="realme">realme</button>
+      <button data-brand="vivo">vivo</button>
+    </div>
+
+    <div class="products" id="productGrid">
+
+      <!-- SAMSUNG S24 Ultra -->
+      <div class="card" data-brand="samsung">
+        <span class="badge badge-samsung">Samsung</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-s24-ultra-5g.jpg" alt="Samsung Galaxy S24 Ultra" onerror="this.src='https://picsum.photos/seed/s24ultra/300/300.jpg'">
+        </div>
+        <h3>Samsung Galaxy S24 Ultra</h3>
+        <p class="specs">12GB RAM | 256GB | Snapdragon 8 Gen 3</p>
+        <p class="price-old">Rp 24.999.000</p>
+        <p class="price">Rp 21.999.000</p>
+        <button onclick="addToCart('Samsung Galaxy S24 Ultra')">Beli Sekarang</button>
+      </div>
+
+      <!-- SAMSUNG A55 -->
+      <div class="card" data-brand="samsung">
+        <span class="badge badge-samsung">Samsung</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-a55-5g.jpg" alt="Samsung Galaxy A55 5G" onerror="this.src='https://picsum.photos/seed/a55/300/300.jpg'">
+        </div>
+        <h3>Samsung Galaxy A55 5G</h3>
+        <p class="specs">8GB RAM | 256GB | Exynos 1480</p>
+        <p class="price">Rp 5.999.000</p>
+        <button onclick="addToCart('Samsung Galaxy A55 5G')">Beli Sekarang</button>
+      </div>
+
+      <!-- OPPO Reno11 Pro -->
+      <div class="card" data-brand="oppo">
+        <span class="badge badge-oppo">OPPO</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/oppo-reno11-pro-5g-.jpg" alt="OPPO Reno11 Pro 5G" onerror="this.src='https://picsum.photos/seed/reno11pro/300/300.jpg'">
+        </div>
+        <h3>OPPO Reno11 Pro 5G</h3>
+        <p class="specs">12GB RAM | 512GB | Dimensity 8200</p>
+        <p class="price">Rp 8.999.000</p>
+        <button onclick="addToCart('OPPO Reno11 Pro 5G')">Beli Sekarang</button>
+      </div>
+
+      <!-- OPPO A79 -->
+      <div class="card" data-brand="oppo">
+        <span class="badge badge-oppo">OPPO</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/oppo-a79-5g.jpg" alt="OPPO A79 5G" onerror="this.src='https://picsum.photos/seed/oppoa79/300/300.jpg'">
+        </div>
+        <h3>OPPO A79 5G</h3>
+        <p class="specs">8GB RAM | 256GB | Dimensity 6020</p>
+        <p class="price">Rp 3.799.000</p>
+        <button onclick="addToCart('OPPO A79 5G')">Beli Sekarang</button>
+      </div>
+
+      <!-- Infinix GT 20 Pro -->
+      <div class="card" data-brand="infinix">
+        <span class="badge badge-infinix">Infinix</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/infinix-gt-20-pro.jpg" alt="Infinix GT 20 Pro" onerror="this.src='https://picsum.photos/seed/gt20pro/300/300.jpg'">
+        </div>
+        <h3>Infinix GT 20 Pro 5G</h3>
+        <p class="specs">12GB RAM | 256GB | Dimensity 8200</p>
+        <p class="price">Rp 4.399.000</p>
+        <button onclick="addToCart('Infinix GT 20 Pro 5G')">Beli Sekarang</button>
+      </div>
+
+      <!-- Infinix Note 40 -->
+      <div class="card" data-brand="infinix">
+        <span class="badge badge-infinix">Infinix</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/infinix-note-40.jpg" alt="Infinix Note 40" onerror="this.src='https://picsum.photos/seed/note40/300/300.jpg'">
+        </div>
+        <h3>Infinix Note 40</h3>
+        <p class="specs">8GB RAM | 256GB | Helio G99</p>
+        <p class="price">Rp 2.799.000</p>
+        <button onclick="addToCart('Infinix Note 40')">Beli Sekarang</button>
+      </div>
+
+      <!-- Xiaomi 14 -->
+      <div class="card" data-brand="xiaomi">
+        <span class="badge badge-xiaomi">Xiaomi</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/xiaomi-14-5g.jpg" alt="Xiaomi 14" onerror="this.src='https://picsum.photos/seed/xiaomi14/300/300.jpg'">
+        </div>
+        <h3>Xiaomi 14</h3>
+        <p class="specs">12GB RAM | 256GB | Snapdragon 8 Gen 3</p>
+        <p class="price-old">Rp 13.999.000</p>
+        <p class="price">Rp 11.999.000</p>
+        <button onclick="addToCart('Xiaomi 14')">Beli Sekarang</button>
+      </div>
+
+      <!-- Redmi Note 13 Pro -->
+      <div class="card" data-brand="xiaomi">
+        <span class="badge badge-xiaomi">Xiaomi</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/xiaomi-redmi-note-13-pro-5g.jpg" alt="Redmi Note 13 Pro 5G" onerror="this.src='https://picsum.photos/seed/redminote13/300/300.jpg'">
+        </div>
+        <h3>Redmi Note 13 Pro 5G</h3>
+        <p class="specs">8GB RAM | 256GB | Snapdragon 7s Gen 2</p>
+        <p class="price">Rp 4.399.000</p>
+        <button onclick="addToCart('Redmi Note 13 Pro 5G')">Beli Sekarang</button>
+      </div>
+
+      <!-- realme 12 Pro+ -->
+      <div class="card" data-brand="realme">
+        <span class="badge badge-realme">realme</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/realme-12-pro-plus-5g.jpg" alt="realme 12 Pro+ 5G" onerror="this.src='https://picsum.photos/seed/realme12pro/300/300.jpg'">
+        </div>
+        <h3>realme 12 Pro+ 5G</h3>
+        <p class="specs">12GB RAM | 512GB | Snapdragon 7s Gen 2</p>
+        <p class="price">Rp 6.999.000</p>
+        <button onclick="addToCart('realme 12 Pro+ 5G')">Beli Sekarang</button>
+      </div>
+
+      <!-- vivo V30 -->
+      <div class="card" data-brand="vivo">
+        <span class="badge badge-vivo">vivo</span>
+        <div class="card-img-wrap">
+          <img src="https://fdn2.gsmarena.com/vv/bigpic/vivo-v30-5g.jpg" alt="vivo V30 5G" onerror="this.src='https://picsum.photos/seed/vivov30/300/300.jpg'">
+        </div>
+        <h3>vivo V30 5G</h3>
+        <p class="specs">12GB RAM | 512GB | Snapdragon 7 Gen 3</p>
+        <p class="price">Rp 6.999.000</p>
+        <button onclick="addToCart('vivo V30 5G')">Beli Sekarang</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <div class="toast-icon">✓</div>
+    <span id="toastMsg">Produk ditambahkan!</span>
+  </div>
+
+  <footer id="kontak">
+    <p>&copy; 2026 <span>GadgetZone</span>. Hak Cipta Dilindungi.</p>
+  </footer>
+
+  <script>
+    // ── Filter / Tab Brand ──
+    const filterBtns = document.querySelectorAll('.filter-tabs button');
+    const cards = document.querySelectorAll('.card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update active state
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const brand = btn.dataset.brand;
+
+        cards.forEach(card => {
+          if (brand === 'all' || card.dataset.brand === brand) {
+            card.style.display = 'flex';
+            card.style.animation = 'fadeUp 0.35s ease forwards';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // ── Fade-up animation keyframes ──
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // ── Toast Notification ──
+    let toastTimer;
+    function addToCart(name) {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toastMsg');
+      msg.textContent = `${name} ditambahkan ke keranjang!`;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // ── Initial fade-in on load ──
+    window.addEventListener('DOMContentLoaded', () => {
+      cards.forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, i * 80);
+      });
+    });
+  </script>
+
+</body>
+</html>
