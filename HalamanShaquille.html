@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Basket Pantai 2v2 - Dynamic Shooting & Juke Bot</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .controls-info {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            pointer-events: none;
+        }
+        kbd {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        #game-over-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        #winner-text {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #f1c40f;
+            text-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+        }
+        #restart-btn {
+            padding: 12px 28px;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #restart-btn:hover {
+            background-color: #27ae60;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="controls-info">
+        Kontrol: <kbd>A</kbd> Kiri | <kbd>D</kbd> Kanan | <kbd>S</kbd> Turun Cepat | Tahan & Lepas <kbd>W</kbd> Tembak (Skor Maksimal: 5)
+    </div>
+
+    <div id="game-over-overlay">
+        <div id="winner-text">TIM MERAH MENANG!</div>
+        <button id="restart-btn" onclick="restartGame()">Main Lagi</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gameOverOverlay = document.getElementById('game-over-overlay');
+const winnerText = document.getElementById('winner-text');
+
+let CANVAS_WIDTH = window.innerWidth;
+let CANVAS_HEIGHT = window.innerHeight;
+let GROUND_Y = CANVAS_HEIGHT - 90;
+const GRAVITY = 0.45;
+const MAX_SCORE = 5;
+
+const HOOP_MARGIN = 180;
+
+const hoops = [
+    { x: HOOP_MARGIN, y: 200, radius: 24, team: 0 },
+    { x: CANVAS_WIDTH - HOOP_MARGIN, y: 200, radius: 24, team: 1 }
+];
+
+function resizeCanvas() {
+    CANVAS_WIDTH = window.innerWidth;
+    CANVAS_HEIGHT = window.innerHeight;
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    GROUND_Y = CANVAS_HEIGHT - 90;
+    
+    hoops[0].x = HOOP_MARGIN;
+    hoops[0].y = CANVAS_HEIGHT - 260;
+    hoops[1].x = CANVAS_WIDTH - HOOP_MARGIN;
+    hoops[1].y = CANVAS_HEIGHT - 260;
+}
+
+let scoreRed = 0;
+let scoreBlue = 0;
+let isGameOver = false;
+
+const ball = {
+    x: 400,
+    y: 180,
+    vx: 0,
+    vy: 0,
+    radius: 14,
+    carrier: null,
+    cooldown: 0,
+    lastTeamShooter: null,
+    isShot: false,
+    trail: []
+};
+
+const players = [
+    { id: 0, x: 0, y: 0, vx: 0, vy: 0, width: 32, height: 90, team: 0, isHumanTeam: true, charge: 0, isCharging: false, animTime: 0, color: '#e74c3c', skin: '#f1c27d', jukeCooldown: 0 },
+    { id: 1, x: 0, y: 0, vx: 0, vy: 0, width: 32, height: 90, team: 0, isHumanTeam: true, charge: 0, isCharging: false, animTime: 0, color: '#ff7675', skin: '#e0ac69', jukeCooldown: 0 },
+    { id: 2, x: 0, y: 0, vx: 0, vy: 0, width: 32, height: 90, team: 1, isHumanTeam: false, charge: 0, isCharging: false, animTime: 0, color: '#0984e3', skin: '#ffdbac', jukeCooldown: 0 },
+    { id: 3, x: 0, y: 0, vx: 0, vy: 0, width: 32, height: 90, team: 1, isHumanTeam: false, charge: 0, isCharging: false, animTime: 0, color: '#74b9ff', skin: '#f1c27d', jukeCooldown: 0 }
+];
+
+window.addEventListener('resize', resizeCanvas);
+
+const keys = { w: false, a: false, s: false, d: false };
+
+window.addEventListener('keydown', (e) => {
+    if (isGameOver) return;
+    let k = e.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(k)) {
+        if (k === 'w' && !keys.w) {
+            players.filter(p => p.team === 0).forEach(p => {
+                p.isCharging = true;
+                p.charge = 0;
+            });
+        }
+        keys[k] = true;
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    if (isGameOver) return;
+    let k = e.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(k)) {
+        if (k === 'w' && keys.w) {
+            players.filter(p => p.team === 0).forEach(p => {
+                p.isCharging = false;
+                let jumpForce = 8 + (p.charge * 0.12);
+                p.vy = -Math.min(jumpForce, 16);
+
+                if (ball.carrier === p) {
+                    shootBall(p);
+                }
+                p.charge = 0;
+            });
+        }
+        keys[k] = false;
+    }
+});
+
+// Tembakan Menyesuaikan Jarak (Jauh = Dorongan Kuat, Dekat = Layup/Soft Shot)
+function shootBall(p) {
+    ball.carrier = null;
+    ball.cooldown = 25;
+    ball.lastTeamShooter = p.team;
+    ball.isShot = true;
+
+    let targetHoop = (p.team === 0) ? hoops[1] : hoops[0];
+    let dx = targetHoop.x - p.x;
+    let dy = targetHoop.y - (p.y - p.height / 2);
+    let dist = Math.hypot(dx, dy);
+
+    // Menyesuaikan Kecepatan Horisontal dengan Jarak Ring
+    let speedX;
+    if (dist < 200) {
+        speedX = (p.team === 0) ? 5.2 : -5.2; // Jarak dekat (Layup)
+    } else if (dist < 400) {
+        speedX = (p.team === 0) ? 7.2 : -7.2; // Jarak menengah
+    } else {
+        speedX = (p.team === 0) ? 9.2 : -9.2; // Jarak jauh (Three-pointer)
+    }
+
+    let t = Math.abs(dx / speedX);
+    if (t < 10) t = 10;
+
+    let idealVy = (dy - 0.5 * (GRAVITY * 0.8) * t * t) / t;
+    let idealVx = dx / t;
+
+    let distanceError = (dist / 140) * (Math.random() - 0.5) * 2.2;
+    
+    let chargeError = 0;
+    if (p.isHumanTeam) {
+        let idealCharge = Math.min(Math.max(dist / 10, 15), 55);
+        let diff = p.charge - idealCharge;
+        chargeError = (diff * 0.09);
+    }
+
+    // Error Bot ditambahkan sedikit agar tidak terlalu sempurna (Kesulitan 85%)
+    let botError = (!p.isHumanTeam) ? (Math.random() - 0.5) * 2.2 : 0;
+
+    ball.vx = idealVx + distanceError + chargeError + botError;
+    ball.vy = idealVy + (Math.random() - 0.5) * 1.5;
+}
+
+function resetRound() {
+    ball.x = CANVAS_WIDTH / 2;
+    ball.y = CANVAS_HEIGHT / 2 - 50;
+    ball.vx = 0;
+    ball.vy = 0;
+    ball.carrier = null;
+    ball.cooldown = 30;
+    ball.isShot = false;
+    ball.lastTeamShooter = null;
+    ball.trail = [];
+
+    players[0].x = CANVAS_WIDTH * 0.35;
+    players[1].x = CANVAS_WIDTH * 0.25;
+    players[2].x = CANVAS_WIDTH * 0.65;
+    players[3].x = CANVAS_WIDTH * 0.75;
+
+    players.forEach(p => {
+        p.y = GROUND_Y - p.height;
+        p.vx = 0;
+        p.vy = 0;
+        p.charge = 0;
+        p.isCharging = false;
+        p.animTime = 0;
+        p.jukeCooldown = 0;
+    });
+}
+
+function restartGame() {
+    scoreRed = 0;
+    scoreBlue = 0;
+    isGameOver = false;
+    gameOverOverlay.style.display = 'none';
+    resetRound();
+}
+
+// AI Bot Diturunkan Kesulitannya (~85%) & Bisa Loncat Menggocek
+function updateAI(p) {
+    const BOT_SPEED = 3.3; // Kecepatan diturunkan sikit dari 4.0
+
+    if (p.jukeCooldown > 0) p.jukeCooldown--;
+
+    if (ball.carrier && ball.carrier.team === 0) {
+        // Bertahan: Mengejar pemain lawan
+        let targetPlayer = ball.carrier;
+        if (p.x < targetPlayer.x - 5) p.vx = BOT_SPEED;
+        else if (p.x > targetPlayer.x + 5) p.vx = -BOT_SPEED;
+        else p.vx = 0;
+
+        if (Math.abs(p.x - targetPlayer.x) < 50 && p.y >= GROUND_Y - p.height && Math.random() < 0.05) {
+            p.vy = -(9 + Math.random() * 4);
+        }
+    } else if (!ball.carrier && ball.cooldown <= 0) {
+        // Mengejar Bola Liar
+        if (p.x < ball.x - 5) p.vx = BOT_SPEED;
+        else if (p.x > ball.x + 5) p.vx = -BOT_SPEED;
+        else p.vx = 0;
+
+        if (Math.abs(p.x - ball.x) < 40 && ball.y < GROUND_Y - 80 && p.y >= GROUND_Y - p.height) {
+            p.vy = -(10 + Math.random() * 4);
+        }
+    } else if (ball.carrier === p) {
+        // Penyerangan: Bot memegang bola
+        let targetHoop = hoops[0];
+        let defender = players.find(player => player.team === 0 && Math.abs(player.x - p.x) < 65);
+
+        // Fitur Loncat Menggocek saat Diadang Player
+        if (defender && p.jukeCooldown <= 0 && p.y >= GROUND_Y - p.height && Math.random() < 0.6) {
+            p.vy = -(9 + Math.random() * 3); // Loncat gocek
+            p.vx = -BOT_SPEED * 1.4; // Dorong melompat ke arah ring melewati player
+            p.jukeCooldown = 80;
+        } else if (Math.abs(p.x - targetHoop.x) > 140) {
+            p.vx = -BOT_SPEED;
+        } else {
+            p.vx = 0;
+            if (p.y >= GROUND_Y - p.height) {
+                p.vy = -(9 + Math.random() * 4);
+                setTimeout(() => {
+                    if (ball.carrier === p) shootBall(p);
+                }, 140 + Math.random() * 150); // Waktu respons sedikit lebih santai
+            }
+        }
+    } else {
+        // Tanpa bola: Posisi taktis
+        let targetHoop = hoops[0];
+        if (p.x > targetHoop.x + 180) p.vx = -BOT_SPEED;
+        else p.vx = 0;
+    }
+}
+
+function update() {
+    if (isGameOver) return;
+
+    players.filter(p => p.team === 0).forEach(p => {
+        if (keys.a) p.vx = -4.5;
+        if (keys.d) p.vx = 4.5;
+        if (keys.s) p.vy += 1.2;
+    });
+
+    players.forEach(p => {
+        if (p.isHumanTeam && p.isCharging) {
+            if (p.charge < 60) p.charge++;
+        }
+
+        if (!p.isHumanTeam) {
+            updateAI(p);
+        }
+
+        p.vy += GRAVITY;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.vx *= 0.88;
+
+        if (p.y >= GROUND_Y - p.height) {
+            p.y = GROUND_Y - p.height;
+            p.vy = 0;
+            if (Math.abs(p.vx) > 0.5) {
+                p.animTime += Math.abs(p.vx) * 0.05; 
+            } else {
+                p.animTime = 0;
+            }
+        } else {
+            p.animTime = 0;
+        }
+
+        if (p.x < p.width / 2) p.x = p.width / 2;
+        if (p.x > CANVAS_WIDTH - p.width / 2) p.x = CANVAS_WIDTH - p.width / 2;
+    });
+
+    // Fisika Tabrakan & Steal
+    for (let i = 0; i < players.length; i++) {
+        for (let j = i + 1; j < players.length; j++) {
+            let p1 = players[i];
+            let p2 = players[j];
+
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
+            let dist = Math.hypot(dx, dy);
+            let minDist = p1.width;
+
+            if (dist < minDist && dist > 0) {
+                let overlap = (minDist - dist) / 2;
+                let nx = dx / dist;
+
+                p1.x -= nx * overlap;
+                p2.x += nx * overlap;
+
+                if (p1.team !== p2.team && ball.cooldown <= 0) {
+                    if (ball.carrier === p1) {
+                        ball.carrier = p2;
+                        ball.cooldown = 22;
+                        ball.isShot = false;
+                    } else if (ball.carrier === p2) {
+                        ball.carrier = p1;
+                        ball.cooldown = 22;
+                        ball.isShot = false;
+                    }
+                }
+            }
+        }
+    }
+
+    // Update Bola & Aura Trail
+    if (ball.cooldown > 0) ball.cooldown--;
+
+    if (ball.carrier) {
+        ball.x = ball.carrier.x + (ball.carrier.team === 0 ? 18 : -18);
+        ball.y = ball.carrier.y + 25;
+        ball.vx = 0;
+        ball.vy = 0;
+        ball.isShot = false;
+        ball.trail = [];
+    } else {
+        ball.vy += GRAVITY * 0.8;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.isShot && ball.lastTeamShooter !== null) {
+            ball.trail.push({ x: ball.x, y: ball.y, alpha: 1.0 });
+            if (ball.trail.length > 15) ball.trail.shift();
+        }
+
+        if (ball.y + ball.radius >= GROUND_Y) {
+            ball.y = GROUND_Y - ball.radius;
+            ball.vy = -ball.vy * 0.65;
+            ball.vx *= 0.8;
+            ball.isShot = false;
+        }
+        if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= CANVAS_WIDTH) {
+            ball.vx = -ball.vx * 0.7;
+        }
+
+        if (ball.cooldown <= 0) {
+            for (let p of players) {
+                let dist = Math.hypot(ball.x - p.x, ball.y - (p.y + p.height / 2));
+                if (dist < p.width + ball.radius + 10) {
+                    ball.carrier = p;
+                    ball.isShot = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    ball.trail.forEach(t => t.alpha -= 0.05);
+    ball.trail = ball.trail.filter(t => t.alpha > 0);
+
+    // Deteksi Skor
+    hoops.forEach(h => {
+        let dist = Math.hypot(ball.x - h.x, ball.y - h.y);
+        if (dist < h.radius && ball.vy > 0) {
+            if (h.team === 0) {
+                scoreBlue += 1;
+            } else {
+                scoreRed += 1;
+            }
+
+            if (scoreRed >= MAX_SCORE) {
+                isGameOver = true;
+                winnerText.innerText = "TIM MERAH MENANG!";
+                winnerText.style.color = "#e74c3c";
+                gameOverOverlay.style.display = 'flex';
+            } else if (scoreBlue >= MAX_SCORE) {
+                isGameOver = true;
+                winnerText.innerText = "TIM BIRU MENANG!";
+                winnerText.style.color = "#3498db";
+                gameOverOverlay.style.display = 'flex';
+            } else {
+                resetRound();
+            }
+        }
+    });
+}
+
+function drawBackground() {
+    let gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+    gradient.addColorStop(0, '#ff7e5f');
+    gradient.addColorStop(0.5, '#feb47b');
+    gradient.addColorStop(0.7, '#86a8e7');
+    gradient.addColorStop(1, '#91eae4');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    ctx.fillStyle = 'rgba(255, 230, 150, 0.8)';
+    ctx.beginPath();
+    ctx.arc(CANVAS_WIDTH / 2, GROUND_Y - 140, 70, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#2980b9';
+    ctx.fillRect(0, GROUND_Y - 70, CANVAS_WIDTH, 70);
+    ctx.fillStyle = '#3498db';
+    ctx.fillRect(0, GROUND_Y - 50, CANVAS_WIDTH, 20);
+
+    ctx.fillStyle = '#e67e22';
+    ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(CANVAS_WIDTH / 2, GROUND_Y);
+    ctx.lineTo(CANVAS_WIDTH / 2, CANVAS_HEIGHT);
+    ctx.stroke();
+}
+
+function drawHumanPlayer(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+
+    let dir = (p.team === 0) ? 1 : -1;
+    let isJumping = (p.y < GROUND_Y - p.height - 2);
+    let isShooting = p.isCharging || (ball.carrier === p);
+    
+    if (p.isHumanTeam) {
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.moveTo(0, -20);
+        ctx.lineTo(-8, -32);
+        ctx.lineTo(8, -32);
+        ctx.fill();
+
+        if (p.isCharging) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(-22, -15, 44, 6);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(-22, -15, (p.charge / 60) * 44, 6);
+        }
+    }
+
+    let swing = isJumping ? 0 : Math.sin(p.animTime) * 15;
+
+    ctx.strokeStyle = p.skin;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 8;
+
+    ctx.beginPath();
+    ctx.moveTo(-6, 72);
+    if (isJumping) ctx.lineTo(-12, 85);
+    else ctx.lineTo(-6 + swing, 88);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(6, 72);
+    if (isJumping) ctx.lineTo(12, 85);
+    else ctx.lineTo(6 - swing, 88);
+    ctx.stroke();
+
+    ctx.fillStyle = p.skin;
+    ctx.beginPath();
+    ctx.arc(0, 15, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#2c3e50';
+    ctx.beginPath();
+    ctx.arc(dir * 5, 12, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-14, 29, 28, 30);
+
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(-14, 59, 28, 14);
+
+    ctx.strokeStyle = p.skin;
+    ctx.lineWidth = 6;
+    
+    ctx.beginPath();
+    ctx.moveTo(0, 35);
+    if (isShooting) {
+        ctx.lineTo(dir * 18, 25);
+    } else if (isJumping) {
+        ctx.lineTo(dir * 15, 12); 
+    } else {
+        ctx.lineTo(dir * 5 - swing, 60);
+    }
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function draw() {
+    drawBackground();
+
+    hoops.forEach(h => {
+        ctx.strokeStyle = '#d35400';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(h.x, GROUND_Y);
+        ctx.lineTo(h.x, h.y - 30);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ecf0f1';
+        let bbX = h.team === 0 ? h.x - 14 : h.x + 2;
+        ctx.fillRect(bbX, h.y - 60, 12, 60);
+
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.radius, 0, Math.PI);
+        ctx.stroke();
+    });
+
+    players.forEach(p => drawHumanPlayer(p));
+
+    if (ball.trail.length > 0 && ball.lastTeamShooter !== null) {
+        let auraColor = (ball.lastTeamShooter === 0) ? 'rgba(231, 76, 60,' : 'rgba(52, 152, 219,';
+        ball.trail.forEach(t => {
+            ctx.fillStyle = auraColor + t.alpha + ')';
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, ball.radius * (0.5 + t.alpha * 0.6), 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.fillStyle = '#e67e22';
+    ctx.beginPath();
+    ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#2c3e50';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, ball.radius, 0, Math.PI);
+    ctx.stroke();
+    
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-ball.radius+2, 0); ctx.lineTo(ball.radius-2, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -ball.radius+2); ctx.lineTo(0, ball.radius-2); ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'black';
+    ctx.shadowBlur = 5;
+    ctx.fillText(`TIM MERAH: ${scoreRed}   |   TIM BIRU: ${scoreBlue}`, CANVAS_WIDTH / 2, 50);
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillText(`Target Skor: ${MAX_SCORE}`, CANVAS_WIDTH / 2, 75);
+    ctx.shadowBlur = 0;
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+resizeCanvas();
+resetRound();
+gameLoop();
+</script>
+
+</body>
+</html>
